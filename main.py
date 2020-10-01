@@ -1,25 +1,16 @@
-import re
-import pdftotext
 import argparse
-import pathlib
-import pandas as pd
-
-import typing
-import requests
 import datetime
-
-
+import pathlib
+import re
+import typing
 from enum import Enum
 
-from utils import (
-    convert_str_float,
-    df_find_by,
-    df_find_by,
-    format_df_date,
-    print_all,
-    rename_df_cols,
-    update_if_nan,
-)
+import pandas as pd
+import pdftotext
+import requests
+
+from utils import (convert_str_float, df_find_by, format_df_date, print_all,
+                   rename_df_cols, update_if_nan)
 
 
 class ColNames(Enum):
