@@ -53,7 +53,9 @@ class ExtractStatement:
             re.sub(pattern, ":", statement_line).split(":")
             for statement_line in statement
         ]
-        statement_lines_clean = [line for line in statement_lines_strip if len(line) > 3]
+        statement_lines_clean = [
+            line for line in statement_lines_strip if len(line) > 3
+        ]
         return statement_lines_clean
 
     def format_statement(self):
@@ -68,7 +70,9 @@ class ExtractStatement:
     def get_statement_df(self):
         formatted_statement = self.format_statement()
         df = pd.DataFrame(formatted_statement)
-        statement_df = rename_df_cols(df, new_names=[i.name for i in self.column_labels])
+        statement_df = rename_df_cols(
+            df, new_names=[i.name for i in self.column_labels]
+        )
         for i in self.column_labels:
             if "posting" in i.name.lower():
                 format_statement_df = format_df_date(statement_df, i.name)
@@ -86,7 +90,7 @@ class ExtractStatement:
 
 class Firefly:
     def __init__(self, hostname, auth_token):
-        self.headers = {"Authorization": "Bearer " + auth_token}
+        self.headers = {"Authorization": f"Bearer {auth_token}"}
         self.hostname = f"{hostname}/api/v1/"
         self.get_about_user()
 
