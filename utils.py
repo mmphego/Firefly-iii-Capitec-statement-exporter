@@ -11,8 +11,8 @@ def df_find_by(df, column_name, str_content):
     return df[df[column_name].str.contains(str_content, case=False)]
 
 
-def format_df_date(df, column_name, format="%d/%m/%Y"):
-    df[column_name] = pd.to_datetime(df[column_name], format=format, errors="coerce")
+def format_df_date(df, column_name, date_format="%d/%m/%Y"):
+    df[column_name] = pd.to_datetime(df[column_name], format=date_format, errors="coerce")
     return df
 
 

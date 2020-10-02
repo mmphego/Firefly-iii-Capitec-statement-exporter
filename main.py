@@ -1,16 +1,17 @@
 import argparse
-import datetime
+import os
 import pathlib
 import re
 import typing
+from datetime import datetime
 from enum import Enum
 
 import pandas as pd
 import pdftotext
 import requests
+from dotenv import load_dotenv
 
-from utils import (convert_str_float, df_find_by, format_df_date, print_all,
-                   rename_df_cols, update_if_nan)
+from utils import convert_str_float, format_df_date, rename_df_cols, update_if_nan
 
 
 class ColNames(Enum):
@@ -52,9 +53,7 @@ class ExtractStatement:
             re.sub(pattern, ":", statement_line).split(":")
             for statement_line in statement
         ]
-        statement_lines_clean = [
-            line for line in statement_lines_strip if len(line) > 3
-        ]
+        statement_lines_clean = [line for line in statement_lines_strip if len(line) > 3]
         return statement_lines_clean
 
     def format_statement(self):
@@ -69,9 +68,7 @@ class ExtractStatement:
     def get_statement_df(self):
         formatted_statement = self.format_statement()
         df = pd.DataFrame(formatted_statement)
-        statement_df = rename_df_cols(
-            df, new_names=[i.name for i in self.column_labels]
-        )
+        statement_df = rename_df_cols(df, new_names=[i.name for i in self.column_labels])
         for i in self.column_labels:
             if "posting" in i.name.lower():
                 format_statement_df = format_df_date(statement_df, i.name)
@@ -90,7 +87,8 @@ class ExtractStatement:
 class Firefly:
     def __init__(self, hostname, auth_token):
         self.headers = {"Authorization": "Bearer " + auth_token}
-        self.hostname = hostname + "/api/v1/"
+        self.hostname = f"{hostname}/api/v1/"
+        self.get_about_user()
 
     def _post(self, endpoint, payload):
         return requests.post(
@@ -127,7 +125,7 @@ class Firefly:
         budget: str = None,
     ):
         if not date_created:
-            date_created = datetime.datetime.now().strftime("%Y-%m-%d")
+            date_created = datetime.now().strftime("%Y-%m-%d")
 
         payload = {
             "transactions": [
@@ -150,14 +148,34 @@ class Firefly:
 def parse_args():
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("--pdf", required=True, help="Capitec Bank Statement (pdf)")
+    parser.add_argument(
+        "--firefly-host", default="http://localhost:8000", help="Firefly Host"
+    )
+    parser.add_argument(
+        "--firefly-api",
+        help="Firefly API token, Alternatively: Add it in your .env Or environment export, save as `FIREFLY_TOKEN=xxx`",
+    )
+
     return vars(parser.parse_args())
 
 
 def main():
+    env_path = pathlib.Path(".") / ".env"
+    load_dotenv(dotenv_path=env_path)
+
     args = parse_args()
+
+    api_token = os.getenv("FIREFLY_TOKEN", args.get("firefly_api"))
     pdf_filename = pathlib.Path(args.get("pdf")).absolute()
     statement_obj = ExtractStatement(pdf_filename)
     statement_df = statement_obj.get_statement_df()
+    firefly = Firefly(args.get("firefly_host"), api_token)
+    # TODO: brute force or sklearn -> bank statement categorizer
+    category = None
+    for idx, row in statement_df.iterrows():
+        date_posted, date_created, description, amount, balance = row.to_list()
+        date_created = str(date_created.strftime("%Y-%m-%d"))
+        print(f"{description:50} {amount} \t {date_created} \t {category}",)
 
 
 if __name__ == "__main__":
