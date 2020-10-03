@@ -1,5 +1,17 @@
 import pandas as pd
 
+import categories
+
+
+def is_categorised(desc, category):
+    return
+
+
+def categorise_statement(df):
+    avail_categories = categories.CATEGORIES
+    # Do stuff
+    return df
+
 
 def convert_str_float(df, column_name):
     df[column_name] = df[column_name].str.replace(" ", "")

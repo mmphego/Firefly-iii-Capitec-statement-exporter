@@ -111,7 +111,7 @@ clean-test: ## Remove test and coverage artefacts
 lint: ## Check style with `flake8` and `mypy`
 	$(PYTHON) -m flake8 --max-line-length 90 $(PACKAGE_NAME)
 	# find . -name "*.py" | xargs pre-commit run -c .configs/.pre-commit-config.yaml flake8 --files
-	$(PYTHON) -m mypy
+# 	$(PYTHON) -m mypy
 
 formatter: ## Format style with `black` and sort imports with `isort`
 	isort -rc .
