@@ -1,6 +1,16 @@
+import re
+
 import pandas as pd
 
 import categories
+
+
+def search_budget_id(category, budget_dict):
+    res = None
+    for budget_name in budget_dict:
+        if re.search(budget_name, category) or re.search(category, budget_name):
+            res = budget_dict[budget_name]
+    return budget_dict[list(budget_dict)[-1]] if res is None else res
 
 
 def update_df_cols(
@@ -30,21 +40,23 @@ def categoriser(
             elif isinstance(desc, dict):
                 for c, d in desc.items():
                     for _d in d:
-                        df = update_df_cols(df, desc_column, _d, cat_column, f"{cat}-{c}")
+                        df = update_df_cols(
+                            df, desc_column, _d, cat_column, f"{cat} - {c}"
+                        )
                         df = update_df_cols(df, desc_column, _d, bud_column, budget)
     return df
 
 
 def categorise_statement(df, cat_column="Category", bud_column="Budget"):
-    df.insert(3, cat_column, "")
-    df.insert(4, bud_column, "")
+    df.insert(3, cat_column, None)
+    df.insert(4, bud_column, None)
     df = categoriser(df, categories.CATEGORIES)
     return df
 
 
 def convert_str_float(df, column_name):
     df[column_name] = df[column_name].str.replace(" ", "")
-    df[column_name] = df[column_name].astype(float)
+    df[column_name] = df[column_name].astype(float).abs()
     return df
 
 

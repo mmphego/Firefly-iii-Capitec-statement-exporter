@@ -16,7 +16,9 @@ from utils import (
     categorise_statement,
     convert_str_float,
     format_df_date,
+    print_all,
     rename_df_cols,
+    search_budget_id,
     update_if_nan,
 )
 
@@ -121,6 +123,12 @@ class Firefly:
     def get_about_user(self):
         return self._get("about/user")
 
+    def simplified_budget(self):
+        return {
+            budget["attributes"]["name"]: budget["id"]
+            for budget in self.get_budgets()["data"]
+        }
+
     def create_transaction(
         self,
         description: str,
@@ -128,8 +136,8 @@ class Firefly:
         date_created: str,
         destination_name: str = "Cash account",
         source_account_id: int = 1,
-        category: str = "Unexpected Expenses",
-        budget: str = None,
+        category_name: str = "Unexpected Expenses",
+        budget_id: int = None,
     ):
         if not date_created:
             date_created = datetime.now().strftime("%Y-%m-%d")
@@ -138,13 +146,13 @@ class Firefly:
             "transactions": [
                 {
                     "type": "withdrawal",
-                    "description": description,
                     "date": date_created,
                     "amount": amount,
+                    "description": description,
                     "source_id": source_account_id,
                     "destination_name": destination_name,
-                    "budget_name": budget,
-                    "category_name": category,
+                    "budget_id": budget_id,
+                    "category_name": category_name,
                 }
             ]
         }
@@ -160,7 +168,10 @@ def parse_args():
     )
     parser.add_argument(
         "--firefly-api",
-        help="Firefly API token, Alternatively: Add it in your .env Or environment export, save as `FIREFLY_TOKEN=xxx`",
+        help=(
+            "Firefly API token, Alternatively: Add it in your .env Or environment "
+            "export, save as `FIREFLY_TOKEN=xxx`"
+        ),
     )
 
     return vars(parser.parse_args())
@@ -173,21 +184,26 @@ def main():
     args = parse_args()
 
     api_token = os.getenv("FIREFLY_TOKEN", args.get("firefly_api"))
+    firefly = Firefly(args.get("firefly_host"), api_token)
+    f_budget = firefly.simplified_budget()
+
     pdf_filename = pathlib.Path(args.get("pdf")).absolute()
     statement_obj = ExtractStatement(pdf_filename)
     statement_df = statement_obj.get_statement_df()
-    firefly = Firefly(args.get("firefly_host"), api_token)
-    # TODO: brute force or sklearn -> bank statement categorizer
     categorised_df = categorise_statement(statement_df)
+
     for idx, row in categorised_df.iterrows():
         _, date_created, description, category, budget, amount, _ = row.to_list()
+        category = "Unexpected Expenses" if category is None else category
+        budget = "Unexpected Expenses" if budget is None else budget
         date_created = str(date_created.strftime("%Y-%m-%d"))
+        budget_id = search_budget_id(category, f_budget)
         resp = firefly.create_transaction(
             description=description,
-            amount=amount,
+            amount=str(amount),
             date_created=date_created,
-            category="Unexpected Expenses" if category is None else category,
-            budget="Unexpected Expenses" if budget is None else budget,
+            category_name=category,
+            budget_id=int(budget_id),
         )
         assert resp.status_code == 200
         time.sleep(0.1)
