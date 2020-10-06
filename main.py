@@ -2,6 +2,7 @@ import argparse
 import os
 import pathlib
 import re
+import time
 import typing
 from datetime import datetime
 from enum import Enum
@@ -177,12 +178,20 @@ def main():
     statement_df = statement_obj.get_statement_df()
     firefly = Firefly(args.get("firefly_host"), api_token)
     # TODO: brute force or sklearn -> bank statement categorizer
-    statement_df = categorise_statement(statement_df)
-    category = None
-    for idx, row in statement_df.iterrows():
-        date_posted, date_created, description, amount, balance = row.to_list()
+    categorised_df = categorise_statement(statement_df)
+    for idx, row in categorised_df.iterrows():
+        _, date_created, description, category, budget, amount, _ = row.to_list()
         date_created = str(date_created.strftime("%Y-%m-%d"))
-        print(f"{description:50} {amount} \t {date_created} \t {category}",)
+        resp = firefly.create_transaction(
+            description=description,
+            amount=amount,
+            date_created=date_created,
+            category="Unexpected Expenses" if category is None else category,
+            budget="Unexpected Expenses" if budget is None else budget,
+        )
+        assert resp.status_code == 200
+        time.sleep(0.1)
+    print(f"Updated {len(categorised_df)} items Successfully!")
 
 
 if __name__ == "__main__":

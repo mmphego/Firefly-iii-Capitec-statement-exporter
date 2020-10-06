@@ -3,13 +3,42 @@ import pandas as pd
 import categories
 
 
-def is_categorised(desc, category):
-    return
+def update_df_cols(
+    df, description_column, description_query, update_column, update_value
+):
+    df.loc[
+        df_find_by(df, description_column, description_query).index, update_column
+    ] = update_value.title()
+
+    return df
 
 
-def categorise_statement(df):
-    avail_categories = categories.CATEGORIES
-    # Do stuff
+def categoriser(
+    df,
+    avail_categories,
+    desc_column="Description",
+    cat_column="Category",
+    bud_column="Budget",
+):
+    # FIXME: There must be a better way.
+    for budget, cats in avail_categories.items():
+        for cat, desc in cats.items():
+            if isinstance(desc, list):
+                for d in desc:
+                    df = update_df_cols(df, desc_column, d, cat_column, cat)
+                    df = update_df_cols(df, desc_column, d, bud_column, budget)
+            elif isinstance(desc, dict):
+                for c, d in desc.items():
+                    for _d in d:
+                        df = update_df_cols(df, desc_column, _d, cat_column, f"{cat}-{c}")
+                        df = update_df_cols(df, desc_column, _d, bud_column, budget)
+    return df
+
+
+def categorise_statement(df, cat_column="Category", bud_column="Budget"):
+    df.insert(3, cat_column, "")
+    df.insert(4, bud_column, "")
+    df = categoriser(df, categories.CATEGORIES)
     return df
 
 
@@ -19,8 +48,8 @@ def convert_str_float(df, column_name):
     return df
 
 
-def df_find_by(df, column_name, str_content):
-    return df[df[column_name].str.contains(str_content, case=False)]
+def df_find_by(df, column_name, query):
+    return df[df[column_name].str.contains(query, case=False)]
 
 
 def format_df_date(df, column_name, date_format="%d/%m/%Y"):
