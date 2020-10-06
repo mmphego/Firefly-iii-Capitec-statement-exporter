@@ -14,8 +14,15 @@ from dotenv import load_dotenv
 
 import pandas as pd
 import pdftotext
-from utils import (categorise_statement, convert_str_float, format_df_date,
-                   print_all, rename_df_cols, search_budget_id, update_if_nan)
+from utils import (
+    categorise_statement,
+    convert_str_float,
+    format_df_date,
+    print_all,
+    rename_df_cols,
+    search_budget_id,
+    update_if_nan,
+)
 
 
 class ColNames(Enum):
