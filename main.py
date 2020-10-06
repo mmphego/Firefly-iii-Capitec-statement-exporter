@@ -9,20 +9,13 @@ import typing
 from datetime import datetime
 from enum import Enum
 
-import pandas as pd
-import pdftotext
 import requests
 from dotenv import load_dotenv
 
-from utils import (
-    categorise_statement,
-    convert_str_float,
-    format_df_date,
-    print_all,
-    rename_df_cols,
-    search_budget_id,
-    update_if_nan,
-)
+import pandas as pd
+import pdftotext
+from utils import (categorise_statement, convert_str_float, format_df_date,
+                   print_all, rename_df_cols, search_budget_id, update_if_nan)
 
 
 class ColNames(Enum):

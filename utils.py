@@ -1,8 +1,7 @@
 import re
 
-import pandas as pd
-
 import categories
+import pandas as pd
 
 
 def search_budget_id(category, budget_dict):
