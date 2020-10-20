@@ -193,7 +193,7 @@ def main():
     statement_obj = ExtractStatement(pdf_filename)
     statement_df = statement_obj.get_statement_df()
     categorised_df = categorise_statement(statement_df)
-
+    print(f"Updating FireFly: {firefly} with {len(categorised_df)} entries.")
     for idx, row in categorised_df.iterrows():
         _, date_created, description, category, budget, amount, _ = row.to_list()
         category = "Unexpected Expenses" if category is None else category
